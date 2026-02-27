@@ -35,6 +35,27 @@ The system supports rolling, zero-downtime deployments across multiple Availabil
 
 Developer Push -->GitHub-(Webhook)->Jenkins Pipeline-->Docker Build (v${BUILD_NUMBER})-->Push to DockerHub-->Create New Launch Template Version-->Trigger ASG Instance Refresh-->Rolling Deployment (Multi-AZ)-->ALB Routes Traffic to Healthy Instances
 
+                    Developer Push
+                         ↓
+		       GitHub
+			 ↓ (Webhook)
+		    Jenkins Pipeline
+			 ↓	
+		Docker Build (v${BUILD_NUMBER})
+
+		    Push to DockerHub
+			 ↓	
+		Create New Launch Template Version
+			 ↓
+		Trigger ASG Instance Refresh
+			 ↓
+         	Rolling Deployment (Multi-AZ)
+			 ↓
+	     ALB Routes Traffic to Healthy Instances
+
+
+
+
 
 Deployment is fully automated. No manual SSH or container restarts are required.
 
@@ -109,21 +130,20 @@ infra/asg-config.md
 ---
 
 ## 📌 Repository Structure
-.
+			.
+ 	
+			 ├── app.js
+			 ├── Dockerfile
+
+			 ├── Jenkinsfile
  
- ├── app.js
+			 ├── package.json
  
- ├── Dockerfile
- 
- ├── Jenkinsfile
- 
- ├── package.json
- 
- ├── infra/
-      
-      ├── architecture.md
-      ├── security-groups.md
-      └── asg-config.md
+			 ├── infra/
+    				  
+     				 ├── architecture.md
+      				 ├── security-groups.md
+      				 └── asg-config.md
 
 ---
 
