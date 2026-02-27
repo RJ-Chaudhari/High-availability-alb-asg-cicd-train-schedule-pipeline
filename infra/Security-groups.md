@@ -1,30 +1,50 @@
-# Security Group Configuration
+# Security Group Design – Reference-Based Model
 
-## 1. Jenkins-SG
+Security groups are configured using SG-to-SG references instead of wide CIDR rules.
+
+---
+
+## Jenkins-SG
+
+Purpose: CI server access
+
 Inbound:
-- SSH (22) → My IP
-- 8080 → 0.0.0.0/0 (for webhook testing)
+- TCP 22 → Admin IP only
+- TCP 8080 → Public (temporary for webhook testing)
 
 Outbound:
 - All traffic allowed
 
 ---
 
-## 2. ALB-SG
+## ALB-SG
+
+Purpose: Public entry point
+
 Inbound:
-- HTTP (80) → 0.0.0.0/0
+- TCP 80 → 0.0.0.0/0
 
 Outbound:
-- HTTP (80) → App-Server-SG
+- TCP 80 → App-Server-SG (Security Group reference)
 
 ---
 
-## 3. App-Server-SG
+## App-Server-SG
+
+Purpose: Application runtime instances
+
 Inbound:
-- HTTP (80) → ALB-SG
-- SSH (22) → Jenkins-SG
+- TCP 80 → ALB-SG
+- TCP 22 → Jenkins-SG (optional for controlled access)
 
 Outbound:
-- All traffic allowed
+- All traffic allowed (required for DockerHub image pull)
 
-Security group referencing is used instead of open CIDR rules.
+---
+
+## Security Principles Applied
+
+- No public exposure of application instances
+- Layered access control
+- SG referencing instead of open CIDR
+- Separation of CI and runtime layers

@@ -1,192 +1,106 @@
-# High Availability Architecture – ALB + ASG + Jenkins CI/CD
+# High Availability Architecture – Technical Design
 
-## 1. Overview
+## 1. System Overview
 
-This project demonstrates a production-style high availability deployment architecture on AWS using:
+This project implements a rolling, zero-downtime deployment strategy using:
 
-- Application Load Balancer (ALB)
-- Auto Scaling Group (ASG)
-- Launch Templates
-- Jenkins CI/CD Pipeline
-- Docker-based application deployment
+- Application Load Balancer (Layer 7)
+- Target Group (HTTP health-based routing)
+- Auto Scaling Group (Multi-AZ)
+- Launch Template versioning
+- Jenkins-triggered infrastructure update
 
-The system is designed to support rolling, zero-downtime deployments across multiple Availability Zones.
-
----
-
-## 2. High-Level Architecture
-            Internet
-                ↓
-    Application Load Balancer (ALB)
-                ↓
-          Target Group (HTTP:80)
-                ↓
-      Auto Scaling Group (Min: 2)
-         ↓                    ↓
-    EC2 Instance A        EC2 Instance B
-    Docker Container      Docker Container
-    (train-app:vX)        (train-app:vX)
-
-                ↑
-           Jenkins CI Server
-
+The deployment model follows immutable infrastructure principles.
 
 ---
 
-## 3. Infrastructure Components
+## 2. Network Architecture
 
-### 3.1 Application Load Balancer (ALB)
+VPC: Default VPC  
+Subnets: Two subnets across different Availability Zones  
+ALB: Internet-facing  
+EC2 instances: No public IP (private communication via ALB)
 
-- Type: Internet-facing
-- Listener: HTTP (Port 80)
-- Routes traffic to Target Group
-- Performs health checks on `/`
-- Only routes traffic to healthy instances
+Traffic Flow:
 
----
-
-### 3.2 Target Group
-
-- Protocol: HTTP
-- Port: 80
-- Health check path: `/`
-- Health check type: ELB-based
-- Registered targets: EC2 instances from ASG
+Internet  
+→ ALB (Port 80)  
+→ Target Group  
+→ EC2 instances (Docker container on port 80)
 
 ---
 
-### 3.3 Auto Scaling Group (ASG)
+## 3. Deployment Architecture
 
-- Desired capacity: 2
-- Minimum capacity: 2
-- Maximum capacity: 4
-- Multi-AZ deployment (2 subnets)
-- Health check type: ELB
+Each deployment performs:
 
-ASG ensures:
+1. Docker image build with version tag `v${BUILD_NUMBER}`
+2. Push image to DockerHub
+3. Create new Launch Template version
+4. Trigger Auto Scaling Group instance refresh
 
-- Minimum 2 healthy instances always running
-- Automatic replacement of unhealthy instances
-- Rolling instance replacement during deployment
+ASG performs rolling replacement:
+
+- Launch new instance using latest Launch Template version
+- Wait for ALB health check success
+- Terminate old instance
+- Maintain minimum healthy capacity
+
+This guarantees no service interruption.
 
 ---
 
-### 3.4 Launch Template
+## 4. Launch Template Strategy
 
-Each deployment creates a new Launch Template version.
-
-Launch Template defines:
+Launch Template contains:
 
 - AMI: Ubuntu 22.04
 - Instance type: t2.micro
 - Security Group: App-Server-SG
-- User-data script:
-  - Install Docker
-  - Pull Docker image (rajshreec/train-app:vX)
-  - Run container on port 80
+- User-data script (base64 encoded)
 
-User-data is dynamically updated per deployment to inject the new image version.
+User-data responsibilities:
 
----
+- Install Docker
+- Pull image from DockerHub using version tag
+- Run container mapped to port 80
 
-### 3.5 Jenkins CI/CD Server
-
-Jenkins is responsible for:
-
-1. Cloning repository from GitHub
-2. Building Docker image (`v${BUILD_NUMBER}`)
-3. Pushing image to DockerHub
-4. Creating new Launch Template version
-5. Triggering ASG Instance Refresh
-
-Deployment is fully automated via GitHub Webhook.
+A new Launch Template version is created for every deployment.
 
 ---
 
-## 4. CI/CD Deployment Flow
-Developer
-↓
-GitHub Push
-↓ (Webhook)
-Jenkins Pipeline
-↓
-Docker Build (vX)
-↓
-Push to DockerHub
-↓
-Create Launch Template Version
-↓
-Start ASG Instance Refresh
-↓
-New EC2 Instances Launch
-↓
-ALB Health Check
-↓
-Traffic Shift to Healthy Instances
+## 5. High Availability Mechanisms
 
+High availability is achieved through:
+
+- Multi-AZ deployment
+- Minimum capacity of 2 instances
+- ELB-based health checks
+- Rolling instance refresh
+- ALB routing only to healthy targets
+
+If an instance fails health check:
+
+- ASG automatically replaces it
+- ALB stops routing traffic to it
 
 ---
 
-## 5. Rolling Deployment Strategy
+## 6. Failure Scenarios Covered
 
-The deployment uses:
-
-- Launch Template versioning
-- ASG Instance Refresh
-- ELB health-based traffic routing
-
-Process:
-
-1. New Launch Template version is created
-2. ASG starts instance refresh
-3. New instance launches with new image version
-4. Health checks pass
-5. Old instance terminates
-6. Capacity remains at minimum healthy level (2)
-
-This ensures zero downtime.
+| Scenario | System Behavior |
+|----------|-----------------|
+| Instance crash | ASG launches replacement |
+| Container failure | Health check fails → ASG replacement |
+| Deployment update | Rolling replacement |
+| Single AZ failure | Traffic routed to other AZ |
 
 ---
 
-## 6. Security Design
+## 7. Architectural Principles Applied
 
-Security Groups are configured using reference-based rules:
-
-### Jenkins-SG
-- SSH (22) → Admin IP
-- 8080 → Public (for webhook testing)
-
-### ALB-SG
-- HTTP (80) → 0.0.0.0/0
-
-### App-Server-SG
-- HTTP (80) → ALB-SG
-- SSH (22) → Jenkins-SG
-
-No direct public access to application instances.
-
----
-
-## 7. Versioning Strategy
-
-Docker images are tagged using:
-v${BUILD_NUMBER}
-
-
-Each deployment produces:
-
-- Immutable image
-- Immutable Launch Template version
-- Controlled rolling update
-
----
-
-## 8. Key Engineering Principles Demonstrated
-
-- Immutable infrastructure
-- Rolling deployments
-- Multi-AZ high availability
-- Health-based traffic routing
-- Automated infrastructure update via CI/CD
-- Version-controlled deployment strategy
-
+- Immutable deployments
+- Infrastructure versioning
+- Health-driven traffic routing
+- Automated infrastructure updates
+- Multi-AZ redundancy

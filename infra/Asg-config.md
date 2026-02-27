@@ -1,30 +1,35 @@
-# Auto Scaling Group Configuration
+# Auto Scaling Group & Deployment Configuration
 
 ## Launch Template
 
-AMI: Ubuntu 22.04
-Instance type: t2.micro
-IAM Role: Allows EC2 + AutoScaling API access (for Jenkins operations)
+Defines immutable infrastructure blueprint.
 
-User-data script:
-- Installs Docker
-- Pulls image from DockerHub
-- Runs container on port 80
+Configuration:
+
+- AMI: Ubuntu 22.04
+- Instance Type: t2.micro
+- Security Group: App-Server-SG
+- No public IP
+- User-data script installs Docker and runs container
+
+A new Launch Template version is created per deployment.
 
 ---
 
-## Auto Scaling Group
+## Auto Scaling Group Configuration
 
-Desired Capacity: 2
-Minimum Capacity: 2
-Maximum Capacity: 4
+Desired Capacity: 2  
+Minimum Capacity: 2  
+Maximum Capacity: 4  
 
-Multi-AZ deployment enabled (2 subnets)
+Multi-AZ: Enabled (2 subnets)  
 
 Health Check Type:
-- ELB (ALB health check based)
+- ELB (ALB-based health evaluation)
 
-Instance Refresh Strategy:
-- Triggered via Jenkins after new Launch Template version
-- Rolling replacement
-- Maintains minimum healthy capacity
+---
+
+## Instance Refresh Strategy
+
+Triggered via Jenkins:
+
