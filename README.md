@@ -122,13 +122,13 @@ infra/asg-config.md
  ├── infra/
  
  │  
-  ├── architecture.md
+    ├── architecture.md
  
  │  
-  ├── security-groups.md
+    ├── security-groups.md
  
  │  
-  └── asg-config.md
+    └── asg-config.md
 
 ---
 
