@@ -110,14 +110,18 @@ infra/asg-config.md
 
 ## 📌 Repository Structure
 .
-├── app.js
-├── Dockerfile
-├── Jenkinsfile
-├── package.json
-├── infra/
-│ ├── architecture.md
-│ ├── security-groups.md
-│ └── asg-config.md
+ ├── app.js
+ 
+ ├── Dockerfile
+ 
+ ├── Jenkinsfile
+ 
+ ├── package.json
+ 
+ ├── infra/
+ │ ├── architecture.md
+ │ ├── security-groups.md
+ │ └── asg-config.md
 
 ---
 
