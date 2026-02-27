@@ -34,28 +34,20 @@ The system supports rolling, zero-downtime deployments across multiple Availabil
 ## ⚙️ CI/CD Pipeline Flow
 
 Developer Push
-
 ↓
 GitHub
-
-↓ (Webhook)
+↓  (Webhook)
 Jenkins Pipeline
-
 ↓
 Docker Build (v${BUILD_NUMBER})
-
 ↓
 Push to DockerHub
-
 ↓
 Create New Launch Template Version
-
 ↓
 Trigger ASG Instance Refresh
-
 ↓
 Rolling Deployment (Multi-AZ)
-
 ↓
 ALB Routes Traffic to Healthy Instances
 
