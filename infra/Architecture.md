@@ -8,14 +8,17 @@ This project implements a production-style high availability deployment architec
 
 Internet
    ↓
+   
 Application Load Balancer (ALB)
    ↓
+   
 Target Group (HTTP:80)
    ↓
+   
 Auto Scaling Group (Min:2, Multi-AZ)
    ↓
-EC2 Instances (Docker container running train-app)
-
+   EC2 Instances (Docker container running train-app)
+----------------------------------------------------------
 Jenkins CI Server triggers rolling deployments by:
 
 1. Building Docker image (v${BUILD_NUMBER})
