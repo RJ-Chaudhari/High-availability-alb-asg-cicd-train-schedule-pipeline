@@ -1,101 +1,143 @@
-High Availability Architecture with ALB + ASG
----------------------------------------------------------------------
-🏗 Architecture Overview
+# Train Schedule Application – High Availability CI/CD Architecture
 
-This lab implements a highly available containerized deployment using:
+This project demonstrates a production-style High Availability deployment architecture on AWS using:
 
-Jenkins (CI Layer)
+- Application Load Balancer (ALB)
+- Auto Scaling Group (ASG)
+- Launch Templates
+- Jenkins CI/CD Pipeline
+- Docker-based container deployment
 
-Docker (Containerization)
+The system supports rolling, zero-downtime deployments across multiple Availability Zones.
 
-Docker Hub (Image Registry)
+---
 
-Launch Template
+## 🚀 Architecture Overview
+            Internet
+                ↓
+    Application Load Balancer (ALB)
+                ↓
+          Target Group (HTTP:80)
+                ↓
+      Auto Scaling Group (Min: 2)
+         ↓                    ↓
+    EC2 Instance A        EC2 Instance B
+    Docker Container      Docker Container
+    (train-app:vX)        (train-app:vX)
 
-Auto Scaling Group (Multi-AZ)
+                ↑
+           Jenkins CI Server
 
-Application Load Balancer
 
-Target Group Health Checks
+---
 
-📐 Architecture Flow
-Developer → GitHub → Jenkins → Docker Build → Docker Hub
-→ Launch Template → Auto Scaling Group (Multi-AZ)
-→ EC2 Instances (Docker)
-→ Target Group
-→ ALB (Health Checks + Traffic Routing)
-→ Users
-⚙ Deployment Workflow
+## ⚙️ CI/CD Pipeline Flow
 
-Jenkins builds Docker image.
+Developer Push
+↓
+GitHub
+↓ (Webhook)
+Jenkins Pipeline
+↓
+Docker Build (v${BUILD_NUMBER})
+↓
+Push to DockerHub
+↓
+Create New Launch Template Version
+↓
+Trigger ASG Instance Refresh
+↓
+Rolling Deployment (Multi-AZ)
+↓
+ALB Routes Traffic to Healthy Instances
 
-Image is tagged using build number (v1, v2, v3...).
 
-Image is pushed to Docker Hub.
+Deployment is fully automated. No manual SSH or container restarts are required.
 
-Launch Template defines EC2 bootstrap via user-data.
+---
 
-ASG maintains desired instance count.
+## 🐳 Application Stack
 
-Instance refresh ensures rolling update.
+- Node.js application
+- Docker containerized
+- Exposed on port 80 via container runtime
+- Deployed using EC2 user-data script
 
-ALB distributes traffic across healthy instances.
+---
 
-🔐 Security Design
+## 🔁 Deployment Strategy
 
-Separate Security Groups for Jenkins, ALB, and App instances.
+Each code push triggers:
 
-SSH access restricted to Jenkins security group.
+1. Docker image build with version tag `v${BUILD_NUMBER}`
+2. Image pushed to DockerHub
+3. New Launch Template version created
+4. Auto Scaling Group instance refresh started
+5. New instances launched with updated image
+6. ALB routes traffic only after health checks pass
 
-Application instances not publicly accessible.
+This ensures:
 
-Only ALB exposes HTTP to the internet.
+- Immutable deployments
+- Zero downtime
+- High availability across AZs
 
-Private communication inside default VPC.
+---
 
-🎯 High Availability Features
+## 🏗 Infrastructure Design
 
-Multi-AZ deployment
+- Internet-facing Application Load Balancer
+- Target Group with HTTP health checks
+- Auto Scaling Group (Min: 2, Multi-AZ)
+- Launch Template with versioned user-data
+- Security Group referencing (least-privilege model)
+- Jenkins server with IAM role for AWS API access
 
-Health check-based routing
+Detailed infrastructure documentation is available in:
 
-Automatic instance replacement
+infra/architecture.md
+infra/security-groups.md
+infra/asg-config.md
 
-Horizontal scaling capability
 
-Decoupled CI and runtime layers
+---
 
-🔄 Current Deployment Strategy
+## 🔐 Security Considerations
 
-Application updates are deployed by:
+- Application instances are not publicly exposed
+- ALB is the only public entry point
+- Security groups use reference-based rules
+- IAM role attached to Jenkins for controlled AWS operations
 
-Pushing new Docker image
+---
 
-Triggering Auto Scaling instance refresh
+## 🎯 Key Engineering Principles Demonstrated
 
-Rolling replacement behind ALB
+- High Availability (Multi-AZ)
+- Immutable infrastructure
+- Rolling deployments using ASG Instance Refresh
+- Health-based traffic routing via ALB
+- Fully automated CI/CD using Jenkins + GitHub Webhook
+- Version-controlled Docker image strategy
 
-🚀 Future Improvements
+---
 
-Fully automated instance refresh via Jenkins
+## 📌 Repository Structure
+.
+├── app.js
+├── Dockerfile
+├── Jenkinsfile
+├── package.json
+├── infra/
+│ ├── architecture.md
+│ ├── security-groups.md
+│ └── asg-config.md
 
-Blue/Green deployment model
 
-Infrastructure as Code (Terraform)
+---
 
-HTTPS with ACM
------------------------------------------------------------------------------------
-This is a simple train schedule app written using nodejs. It is intended to be used as a sample application for a series of hands-on learning activities.
+## 📖 Purpose
 
-## Running the app on local
+This repository is part of a hands-on DevOps learning journey focused on building production-aligned infrastructure patterns on AWS.
 
-You need a Java JDK 7 or later to run the build. You can run the build like this:
-
-    ./gradlew build
-
-You can run the app with:
-
-    ./gradlew npm_start
-
-Once it is running, you can access it in a browser at [http://localhost:3000](http://localhost:3000)
-trigger test
+It demonstrates how CI/CD integrates with infrastructure to enable reliable, repeatable, and zero-downtime deployments.
