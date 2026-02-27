@@ -96,7 +96,9 @@ This ensures:
 Detailed infrastructure documentation is available in:
 
 infra/architecture.md
+
 infra/security-groups.md
+
 infra/asg-config.md
 
 
