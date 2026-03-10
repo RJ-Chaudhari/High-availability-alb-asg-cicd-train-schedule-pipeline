@@ -25,12 +25,15 @@ Multi-AZ: Enabled (2 subnets)
 Health Check Type:
 - ELB (ALB-based health evaluation)
 
+---
+
 ## Instance Refresh Strategy
 
 Triggered via Jenkins during Deployment.
+
 Deployment flow:
 
-1. Build new Docker image with version tag
+1. Build new Docker image with version tag (v${BUILD_NUMBER})
 2. Push image to DockerHub
 3. Update Launch Template with new image tag
 4. Trigger Auto Scaling Group instance refresh
