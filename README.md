@@ -89,12 +89,23 @@ This ensures:
 
 ## 🏗 Infrastructure Architecture
 
-- Internet-facing Application Load Balancer
-- Target Group with HTTP health checks
-- Auto Scaling Group (Min: 2, Multi-AZ)
-- Launch Template with versioned user-data
-- Security Group referencing (least-privilege model)
-- Jenkins server with IAM role for AWS API access
+-Internet-facing Application Load Balancer (ALB)
+ Serves as the public entry point and distributes incoming HTTP traffic.
+
+-Target Group with HTTP health checks
+ Ensures traffic is routed only to healthy application instances.
+
+-Auto Scaling Group (Minimum: 2 instances, Multi-AZ)
+ Maintains application availability and replaces unhealthy instances automatically.
+
+-Launch Template with versioned user-data
+ Defines EC2 configuration and deployment logic for Docker container startup.
+
+-Security Group referencing (least-privilege model)
+ Ensures application instances only accept traffic from the ALB.
+
+-Jenkins CI server with IAM role
+ Jenkins securely interacts with AWS APIs to trigger infrastructure updates during deployments.
 
 Detailed infrastructure documentation is available in:
 
@@ -128,21 +139,26 @@ infra/asg-config.md
 ---
 
 ## 📌 Repository Structure
-			.
- 	
-			 ├── app.js
-			 ├── Dockerfile
 
-			 ├── Jenkinsfile
- 
-			 ├── package.json
- 
-			 ├── infra/
-    				  
-     				 ├── architecture.md
-      				 ├── security-groups.md
-      				 └── asg-config.md
-
+.
+├── app.js
+├── Dockerfile
+├── Jenkinsfile
+├── package.json
+├── package-lock.json
+└── infra/
+    ├── provider.tf
+    ├── variables.tf
+    ├── data.tf
+    ├── security.tf
+    ├── alb.tf
+    ├── launch_template.tf
+    ├── autoscaling.tf
+    ├── outputs.tf
+    │
+    ├── architecture.md
+    ├── security-groups.md
+    └── asg-config.md
 ---
 
 ## 📖 Purpose
