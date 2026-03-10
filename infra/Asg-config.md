@@ -14,8 +14,6 @@ Configuration:
 
 A new Launch Template version is created per deployment.
 
----
-
 ## Auto Scaling Group Configuration
 
 Desired Capacity: 2  
@@ -31,5 +29,18 @@ Health Check Type:
 
 ## Instance Refresh Strategy
 
-Triggered via Jenkins:
+Triggered via Jenkins during Deployment.
+Deployment flow:
 
+1. Build new Docker image with version tag
+2. Push image to DockerHub
+3. Update Launch Template with new image tag
+4. Trigger Auto Scaling Group instance refresh
+
+ASG performs rolling replacement:
+
+- Launch new instance using updated Launch Template
+- Wait for ALB health check success
+- Gradually terminate old instances
+
+This ensures zero-downtime deployments.
